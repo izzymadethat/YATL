@@ -1,0 +1,51 @@
+services:
+  server:
+    build: ./backend
+    container_name: server
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - db
+    environment:
+      - PGUSER=postgres
+      - PGHOST=db
+      - PGPASSWORD=secret
+      - PGDATABASE=todo_db
+      - PGPORT=5432
+    networks:
+      - todo_network
+  client:
+    build: ./frontend
+    container_name: client
+    ports:
+      - "3000:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    networks:
+      - todo_network
+  db:
+    image: postgres:15
+    container_name: db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: todo_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - todo_network
+
+networks:
+  todo_network:
+    driver: bridge
+volumes:
+  postgres_data:
